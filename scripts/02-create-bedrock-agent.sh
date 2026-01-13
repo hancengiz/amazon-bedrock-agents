@@ -17,8 +17,9 @@ NC='\033[0m'
 AGENT_NAME="pr-code-reviewer"
 AGENT_DESCRIPTION="AI-powered code reviewer for pull requests"
 REGION="${AWS_REGION:-us-east-1}"
-# Use direct model ID for agents (not inference profile)
-MODEL_ID="anthropic.claude-sonnet-4-20250514-v1:0"
+# Claude 3.5 Sonnet - works with on-demand throughput for agents
+# Note: Claude Sonnet 4 requires inference profiles which agents don't support
+MODEL_ID="anthropic.claude-3-5-sonnet-20241022-v2:0"
 
 # Find project root
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
