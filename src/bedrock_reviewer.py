@@ -11,10 +11,10 @@ from .github_client import PRData
 class BedrockCodeReviewer:
     """Code reviewer powered by Amazon Bedrock and Claude Sonnet 4.5."""
 
-    # Claude Sonnet 4 model ID on Bedrock
-    # Use anthropic.claude-sonnet-4-20250514-v1:0 for Claude Sonnet 4
-    # Or anthropic.claude-3-5-sonnet-20241022-v2:0 for Claude 3.5 Sonnet
-    MODEL_ID = "anthropic.claude-sonnet-4-20250514-v1:0"
+    # Claude Sonnet 4 model ID on Bedrock (requires inference profile)
+    # Use us.anthropic.claude-sonnet-4-20250514-v1:0 for cross-region inference
+    # Or anthropic.claude-3-5-sonnet-20241022-v2:0 for Claude 3.5 Sonnet (on-demand)
+    MODEL_ID = "us.anthropic.claude-sonnet-4-20250514-v1:0"
 
     # Maximum tokens for the response
     MAX_TOKENS = 4096
