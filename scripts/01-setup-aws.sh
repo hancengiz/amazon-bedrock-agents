@@ -98,14 +98,18 @@ POLICY_DOCUMENT=$(cat <<EOF
     "Version": "2012-10-17",
     "Statement": [
         {
+            "Sid": "BedrockInvokeAgent",
+            "Effect": "Allow",
+            "Action": "bedrock:InvokeAgent",
+            "Resource": "arn:aws:bedrock:*:${ACCOUNT_ID}:agent-alias/*"
+        },
+        {
             "Sid": "BedrockInvokeModel",
             "Effect": "Allow",
             "Action": "bedrock:InvokeModel",
             "Resource": [
-                "arn:aws:bedrock:*::foundation-model/anthropic.claude-sonnet-4-5-20250514-v1:0",
-                "arn:aws:bedrock:*::foundation-model/us.anthropic.claude-sonnet-4-5-20250514-v1:0",
-                "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-5-sonnet-*",
-                "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-*"
+                "arn:aws:bedrock:*::foundation-model/anthropic.claude-*",
+                "arn:aws:bedrock:*:*:inference-profile/us.anthropic.claude-*"
             ]
         }
     ]
