@@ -1,4 +1,4 @@
-"""Bedrock Agent-based code reviewer using Claude Sonnet 4."""
+"""Bedrock Agent-based code reviewer."""
 
 import os
 import uuid
@@ -9,7 +9,7 @@ from .github_client import PRData
 
 
 class BedrockCodeReviewer:
-    """Code reviewer powered by Amazon Bedrock Agent with Claude Sonnet 4."""
+    """Code reviewer powered by Amazon Bedrock Agent."""
 
     # Bot marker to identify automated reviews
     BOT_MARKER = "<!-- bedrock-code-reviewer-bot -->"
@@ -152,7 +152,7 @@ Please provide your code review following your instructions."""
 
 ## Automated Code Review
 
-*Reviewed by Amazon Bedrock Agent (Claude Sonnet 4)*
+*Reviewed by Amazon Bedrock Agent*
 
 ---
 

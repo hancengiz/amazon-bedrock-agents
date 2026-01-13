@@ -11,7 +11,7 @@ from .github_client import GitHubClient
 def parse_args() -> argparse.Namespace:
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
-        description="Automated PR code reviewer using Amazon Bedrock and Claude Sonnet 4.5"
+        description="Automated PR code reviewer using Amazon Bedrock Agent"
     )
     parser.add_argument(
         "--repo",
@@ -80,7 +80,7 @@ def main() -> int:
         print(f"  Files changed: {len(pr_data.files_changed)}")
 
         # Generate review
-        print("Generating code review with Claude Sonnet 4.5...")
+        print("Generating code review...")
         review_comment = reviewer.review_pr(pr_data)
 
         if args.dry_run:

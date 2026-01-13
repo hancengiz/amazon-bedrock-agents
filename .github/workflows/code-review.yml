@@ -45,6 +45,12 @@ jobs:
           BEDROCK_AGENT_ID: ${{ secrets.BEDROCK_AGENT_ID }}
           BEDROCK_AGENT_ALIAS_ID: ${{ secrets.BEDROCK_AGENT_ALIAS_ID }}
         run: |
+          # Force re-review on new commits (synchronize), allow skip on initial open
+          FORCE_FLAG=""
+          if [ "${{ github.event.action }}" = "synchronize" ]; then
+            FORCE_FLAG="--force"
+          fi
           python -m src.main \
             --repo "${{ github.repository }}" \
-            --pr "${{ github.event.pull_request.number }}"
+            --pr "${{ github.event.pull_request.number }}" \
+            $FORCE_FLAG
