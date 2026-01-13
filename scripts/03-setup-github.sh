@@ -32,8 +32,11 @@ NC='\033[0m' # No Color
 # Default values
 REPO=""
 CREDENTIALS_FILE=".aws-credentials.json"
+AGENT_FILE=".bedrock-agent.json"
 ACCESS_KEY=""
 SECRET_KEY=""
+AGENT_ID=""
+AGENT_ALIAS_ID=""
 REGION="us-east-1"
 DRY_RUN=false
 
@@ -139,9 +142,31 @@ if [ -z "$ACCESS_KEY" ] || [ -z "$SECRET_KEY" ]; then
         echo -e "${RED}Error: No credentials provided.${NC}"
         echo ""
         echo "Either:"
-        echo "  1. Run ./scripts/setup-aws.sh first to create credentials file"
+        echo "  1. Run ./scripts/01-setup-aws.sh first to create credentials file"
         echo "  2. Use --access-key and --secret-key options"
         echo "  3. Specify credentials file with --credentials FILE"
+        exit 1
+    fi
+fi
+
+# Get agent configuration
+if [ -z "$AGENT_ID" ] || [ -z "$AGENT_ALIAS_ID" ]; then
+    if [ -f "$AGENT_FILE" ]; then
+        echo -e "${YELLOW}Reading agent config from: $AGENT_FILE${NC}"
+
+        if command -v jq &> /dev/null; then
+            AGENT_ID=$(jq -r '.agent_id' "$AGENT_FILE")
+            AGENT_ALIAS_ID=$(jq -r '.agent_alias_id' "$AGENT_FILE")
+        else
+            AGENT_ID=$(grep -o '"agent_id": "[^"]*"' "$AGENT_FILE" | cut -d'"' -f4)
+            AGENT_ALIAS_ID=$(grep -o '"agent_alias_id": "[^"]*"' "$AGENT_FILE" | cut -d'"' -f4)
+        fi
+
+        echo -e "${GREEN}✓ Loaded agent config from file${NC}"
+    else
+        echo -e "${RED}Error: Bedrock Agent not found.${NC}"
+        echo ""
+        echo "Run ./scripts/02-create-bedrock-agent.sh first to create the agent."
         exit 1
     fi
 fi
@@ -154,10 +179,12 @@ fi
 
 echo ""
 echo -e "${YELLOW}Configuration:${NC}"
-echo "  Repository:  $REPO"
-echo "  Access Key:  ${ACCESS_KEY:0:8}..."
-echo "  Secret Key:  ****"
-echo "  Region:      $REGION"
+echo "  Repository:     $REPO"
+echo "  Access Key:     ${ACCESS_KEY:0:8}..."
+echo "  Secret Key:     ****"
+echo "  Region:         $REGION"
+echo "  Agent ID:       $AGENT_ID"
+echo "  Agent Alias ID: $AGENT_ALIAS_ID"
 echo ""
 
 if $DRY_RUN; then
@@ -168,6 +195,8 @@ if $DRY_RUN; then
     echo "Secrets:"
     echo "  • AWS_ACCESS_KEY_ID = ${ACCESS_KEY:0:8}..."
     echo "  • AWS_SECRET_ACCESS_KEY = ****"
+    echo "  • BEDROCK_AGENT_ID = $AGENT_ID"
+    echo "  • BEDROCK_AGENT_ALIAS_ID = $AGENT_ALIAS_ID"
     echo ""
     echo "Variables:"
     echo "  • AWS_REGION = $REGION"
@@ -187,13 +216,15 @@ fi
 echo -e "${GREEN}✓ Repository access confirmed${NC}"
 
 # Set secrets
-echo -e "${YELLOW}Step 1: Setting AWS_ACCESS_KEY_ID secret...${NC}"
+echo -e "${YELLOW}Step 1: Setting AWS secrets...${NC}"
 echo "$ACCESS_KEY" | gh secret set AWS_ACCESS_KEY_ID --repo "$REPO"
-echo -e "${GREEN}✓ AWS_ACCESS_KEY_ID secret set${NC}"
-
-echo -e "${YELLOW}Step 2: Setting AWS_SECRET_ACCESS_KEY secret...${NC}"
 echo "$SECRET_KEY" | gh secret set AWS_SECRET_ACCESS_KEY --repo "$REPO"
-echo -e "${GREEN}✓ AWS_SECRET_ACCESS_KEY secret set${NC}"
+echo -e "${GREEN}✓ AWS credentials configured${NC}"
+
+echo -e "${YELLOW}Step 2: Setting Bedrock Agent secrets...${NC}"
+echo "$AGENT_ID" | gh secret set BEDROCK_AGENT_ID --repo "$REPO"
+echo "$AGENT_ALIAS_ID" | gh secret set BEDROCK_AGENT_ALIAS_ID --repo "$REPO"
+echo -e "${GREEN}✓ Bedrock Agent configured${NC}"
 
 # Set variables
 echo -e "${YELLOW}Step 3: Setting AWS_REGION variable...${NC}"
@@ -223,12 +254,14 @@ echo ""
 echo -e "${BLUE}Secrets set:${NC}"
 echo "  • AWS_ACCESS_KEY_ID"
 echo "  • AWS_SECRET_ACCESS_KEY"
+echo "  • BEDROCK_AGENT_ID"
+echo "  • BEDROCK_AGENT_ALIAS_ID"
 echo ""
 echo -e "${BLUE}Variables set:${NC}"
 echo "  • AWS_REGION = $REGION"
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
-echo "  1. Push the code to your repository (if not already done)"
+echo "  1. Push the code to your repository"
 echo "  2. Create a pull request to trigger the code reviewer"
 echo ""
 echo -e "${BLUE}Verify at:${NC}"
