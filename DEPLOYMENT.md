@@ -6,14 +6,129 @@ Complete step-by-step guide to deploy the Amazon Bedrock PR Code Reviewer.
 
 ## Table of Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Step 1: AWS Account Setup](#step-1-aws-account-setup)
-3. [Step 2: Enable Bedrock Model Access](#step-2-enable-bedrock-model-access)
-4. [Step 3: Create IAM User](#step-3-create-iam-user)
-5. [Step 4: Configure GitHub Repository](#step-4-configure-github-repository)
-6. [Step 5: Deploy the Code](#step-5-deploy-the-code)
-7. [Step 6: Verify Deployment](#step-6-verify-deployment)
-8. [Troubleshooting](#troubleshooting)
+1. [Quick Deploy (Automated)](#quick-deploy-automated)
+2. [Prerequisites](#prerequisites)
+3. [Step 1: AWS Account Setup](#step-1-aws-account-setup)
+4. [Step 2: Enable Bedrock Model Access](#step-2-enable-bedrock-model-access)
+5. [Step 3: Create IAM User](#step-3-create-iam-user)
+6. [Step 4: Configure GitHub Repository](#step-4-configure-github-repository)
+7. [Step 5: Deploy the Code](#step-5-deploy-the-code)
+8. [Step 6: Verify Deployment](#step-6-verify-deployment)
+9. [Troubleshooting](#troubleshooting)
+10. [Cleanup](#cleanup)
+
+---
+
+## Quick Deploy (Automated)
+
+Use the provided scripts to automate the entire deployment process.
+
+### One-Command Deploy
+
+```bash
+# Deploy everything (AWS + GitHub) in one command
+./scripts/deploy.sh
+```
+
+This will:
+1. Create IAM user and policy in AWS
+2. Generate access keys
+3. Configure GitHub repository secrets
+4. Set up the AWS region variable
+
+### Script Options
+
+```bash
+# See all options
+./scripts/deploy.sh --help
+
+# Deploy with custom settings
+./scripts/deploy.sh \
+  --repo "your-org/your-repo" \
+  --region "us-west-2" \
+  --user-name "my-code-reviewer"
+
+# Dry run (see what would happen without making changes)
+./scripts/deploy.sh --dry-run
+
+# Skip AWS setup (if you already have credentials)
+./scripts/deploy.sh --skip-aws
+
+# Skip GitHub setup (if you want to configure secrets manually)
+./scripts/deploy.sh --skip-github
+```
+
+### Individual Scripts
+
+Run setup steps separately if needed:
+
+```bash
+# 1. AWS Setup only (creates IAM user, policy, access keys)
+./scripts/setup-aws.sh
+
+# 2. GitHub Setup only (configures repository secrets)
+./scripts/setup-github.sh --repo "owner/repo"
+
+# 3. Cleanup (removes all created resources)
+./scripts/cleanup.sh
+```
+
+### Script Prerequisites
+
+| Script | Requires |
+|--------|----------|
+| `setup-aws.sh` | AWS CLI configured (`aws configure`) |
+| `setup-github.sh` | GitHub CLI authenticated (`gh auth login`) |
+| `deploy.sh` | Both AWS CLI and GitHub CLI |
+| `cleanup.sh` | AWS CLI and/or GitHub CLI |
+
+### Deployment Flow (Automated)
+
+```mermaid
+flowchart LR
+    subgraph Scripts["./scripts/deploy.sh"]
+        A["setup-aws.sh"] --> B["setup-github.sh"]
+    end
+
+    subgraph AWS["AWS Resources"]
+        A --> C["IAM Policy"]
+        A --> D["IAM User"]
+        A --> E["Access Keys"]
+    end
+
+    subgraph GitHub["GitHub Config"]
+        B --> F["AWS_ACCESS_KEY_ID"]
+        B --> G["AWS_SECRET_ACCESS_KEY"]
+        B --> H["AWS_REGION"]
+    end
+
+    E -.->|"credentials.json"| B
+```
+
+### Example Output
+
+```
+╔════════════════════════════════════════════════════════════╗
+║   🤖 Bedrock PR Code Reviewer - Deployment                 ║
+╚════════════════════════════════════════════════════════════╝
+
+Checking Prerequisites...
+✓ AWS CLI - Configured (Account: 123456789012)
+✓ GitHub CLI - Authenticated as your-username
+✓ Auto-detected repository: your-org/your-repo
+
+Step 1: AWS Setup
+✓ Created policy: arn:aws:iam::123456789012:policy/BedrockCodeReviewerPolicy
+✓ Created user: github-bedrock-reviewer
+✓ Created access keys
+
+Step 2: GitHub Setup
+✓ AWS_ACCESS_KEY_ID secret set
+✓ AWS_SECRET_ACCESS_KEY secret set
+✓ AWS_REGION variable set
+
+Deployment Complete! 🎉
+```
 
 ---
 
@@ -445,6 +560,109 @@ flowchart LR
 
 ---
 
+## Local Testing
+
+Run code reviews locally before pushing to GitHub.
+
+### Run Local Review
+
+```bash
+# Review the current branch's PR
+./scripts/run-local.sh
+
+# Review a specific PR
+./scripts/run-local.sh --pr 123
+
+# Dry run (preview without posting comment)
+./scripts/run-local.sh --pr 123 --dry-run
+
+# Force re-review
+./scripts/run-local.sh --pr 123 --force
+```
+
+### Local Review Flow
+
+```mermaid
+flowchart LR
+    A["run-local.sh"] --> B["Load Credentials"]
+    B --> C["Fetch PR Data"]
+    C --> D["Call Bedrock"]
+    D --> E{"--dry-run?"}
+    E -->|Yes| F["Print Review"]
+    E -->|No| G["Post Comment"]
+```
+
+### Prerequisites for Local Testing
+
+1. AWS credentials (either from `./scripts/setup-aws.sh` or environment)
+2. GitHub CLI authenticated (`gh auth login`)
+3. Python 3.11+
+
+---
+
+## Cleanup
+
+Remove all AWS and GitHub resources created by the deployment scripts.
+
+### Full Cleanup
+
+```bash
+# Remove everything (with confirmation)
+./scripts/cleanup.sh
+
+# Dry run (see what would be deleted)
+./scripts/cleanup.sh --dry-run
+
+# Skip confirmation
+./scripts/cleanup.sh --force
+```
+
+### Selective Cleanup
+
+```bash
+# Only cleanup AWS resources
+./scripts/cleanup.sh --aws-only
+
+# Only cleanup GitHub secrets
+./scripts/cleanup.sh --github-only
+```
+
+### What Gets Deleted
+
+| Resource | Location |
+|----------|----------|
+| IAM User | AWS IAM (`github-bedrock-reviewer`) |
+| IAM Policy | AWS IAM (`BedrockCodeReviewerPolicy`) |
+| Access Keys | AWS IAM |
+| `AWS_ACCESS_KEY_ID` | GitHub Secrets |
+| `AWS_SECRET_ACCESS_KEY` | GitHub Secrets |
+| `AWS_REGION` | GitHub Variables |
+| `.aws-credentials.json` | Local file |
+
+### Cleanup Flow
+
+```mermaid
+flowchart TD
+    A["cleanup.sh"] --> B{"--aws-only?"}
+    B -->|No| C["Delete GitHub Secrets"]
+    B -->|Yes| D["Skip GitHub"]
+
+    C --> E{"--github-only?"}
+    D --> E
+
+    E -->|No| F["Delete IAM Access Keys"]
+    E -->|Yes| G["Skip AWS"]
+
+    F --> H["Detach IAM Policy"]
+    H --> I["Delete IAM User"]
+    I --> J["Delete IAM Policy"]
+
+    G --> K["Done"]
+    J --> K
+```
+
+---
+
 ## Next Steps
 
 After successful deployment:
@@ -459,3 +677,5 @@ After successful deployment:
    ```
    https://console.aws.amazon.com/billing/home#/budgets
    ```
+
+5. **Test locally** - Use `./scripts/run-local.sh` to test reviews before deploying

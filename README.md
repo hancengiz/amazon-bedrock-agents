@@ -227,6 +227,12 @@ mindmap
 ├── .github/
 │   └── workflows/
 │       └── code-review.yml    # GitHub Action workflow
+├── scripts/
+│   ├── deploy.sh              # One-command deployment
+│   ├── setup-aws.sh           # AWS IAM setup
+│   ├── setup-github.sh        # GitHub secrets setup
+│   ├── run-local.sh           # Local code review runner
+│   └── cleanup.sh             # Remove all resources
 ├── src/
 │   ├── __init__.py
 │   ├── github_client.py       # GitHub API interactions
@@ -249,7 +255,23 @@ mindmap
 
 ## Quick Start
 
-For detailed step-by-step deployment instructions with screenshots and URLs, see **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+### Automated Deployment (Recommended)
+
+```bash
+# One-command deploy (requires AWS CLI + GitHub CLI)
+./scripts/deploy.sh
+```
+
+### Manual Deployment
+
+For detailed step-by-step deployment instructions, see **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+### Local Testing
+
+```bash
+# Run a code review locally
+./scripts/run-local.sh --pr 123 --dry-run
+```
 
 ### Prerequisites
 
